@@ -1,6 +1,6 @@
-# rxjs-compatibility
+# redux-observable-adapter-rxjs-v4
 
-Convert Observables from RxJS [v5](http://github.com/ReactiveX/RxJS) to [v4](https://github.com/Reactive-Extensions/RxJS) and vice versa.
+Use [RxJS v4](https://github.com/Reactive-Extensions/RxJS) with [redux-observable](https://github.com/redux-observable/redux-observable)
 
 ## Please upgrade to 100% RxJS v5 ASAP
 
@@ -8,71 +8,35 @@ This library is meant as a stop gap to help ease migration progressively, not as
 
 ## Install
 
-This has a peer dependencies of `rxjs@5.*.*` and `rx@4.*.*`, which will have to be installed as well.
+This has a peer dependency of `rx@4.*.*`, which will have to be installed as well.
 
 ```sh
-npm install --save rxjs-compatibility
+npm install --save redux-observable-adapter-rxjs-v4
 ```
 
 ## Usage
 
-> Note: this library does _not_ provide _automatic_ interop between the two for cases like `ObservableV4.from(v5)`, `v4.flatMap(() => v5)`, etc. You must explicitly "convert" between the two.
-
-When you convert from one Observable version to the other, keep in mind that if it's currently in v4 "mode", you'll only have v4 operators until you convert it back to v5 and vice versa. Effectively the result of one is piped into the other, just like how normal operators work.
-
-### Operators
-
-The most ergonomic way to convert between the two versions is via the included operators patched on both Observable prototypes.
-
-At some entry point file, you first run this to patch them:
+This library basically will convert the v5 `ActionsObservable` provided to your Epics into a v4 version. Then the v4 Observable you return will be converted back to v5 inside the middleware.
 
 ```js
-import { patchObservables } from 'rxjs-compatibility';
+import v4Adapter from 'redux-observable-adapter-rxjs-v4';
 
-patchObservables();
+const epicMiddleware = createEpicMiddleware(rootEpic, { adapter: v4Adapter });
+
+// your Epics are now v4 streams
+
+const fetchUserEpic = action$ =>
+  action$.ofType(FETCH_USER)
+    .select(fetchUserFulfilled); // .select() is a v4-only operator for .map()
 ```
 
-Although not usually necessary, if you need to customize what Observable prototypes get patched, you can optionally provide them as v4 and v5 arguments:
+### Upgrading to RxJS v5
+
+We suggest you upgrade your app to use RxJS v5 as soon as possible. To ease that migration, you can also include the [rxjs-compatibility](https://github.com/jayphelps/rxjs-compatibility) library to start using RxJS v5 in your Epics while you transition the rest of your app away from v4.
+
+After you've run `patchObservables()`, you can opt Epics into v5 (or v4) version with the new operators:
 
 ```js
-patchObservables(ObservableV4, ObservableV5);
-```
-
-#### stream$.v4()
-
-Converts the current Observable to a v4 Observable. Exists and works on both v5 Observables and ones that are already v4 too, in which case they just return `this`.
-
-```js
-RxV5.Observable.of(1, 2, 3)
-  .v4()
-  .select(num => num + 1)
-  .subscribe(value => console.log(value));
-
-// 2, 3, 4
-```
-
-#### stream$.v5()
-
-Converts the current Observable to a v5 Observable. Exists and works on both v4 Observables and ones that are already v5 too, in which case they just return `this`.
-
-```js
-RxV4.Observable.of(1, 2, 3)
-  .v5()
-  .map(num => num + 1)
-  .subscribe(value => console.log(value));
-
-// 2, 3, 4
-```
-
-### Utility helpers
-
-If you need to convert an existing observable and don't want to (or can't) patch the prototype, you can use the provided helpers:
-
-```js
-import { toV4, toV5 } from 'rxjs-compatibility';
-
-const v5 = ObservableV5.of(1, 2, 3);
-
-toV4(v5) instanceof ObservableV4;
-// true
+const exampleEpic = action$ =>
+  action$.v4().anyV4Operators().v5();
 ```
