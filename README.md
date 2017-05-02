@@ -1,5 +1,7 @@
 # redux-observable-adapter-rxjs-v4
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/redux-observable/redux-observable-adapter-rxjs-v4.svg)](https://greenkeeper.io/)
+
 Use [RxJS v4](https://github.com/Reactive-Extensions/RxJS) with [redux-observable](https://github.com/redux-observable/redux-observable)
 
 ## Please upgrade to 100% RxJS v5 ASAP
